@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ajaia Docs</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Login -->
+  <main id="login" class="hidden">
+    <div class="card">
+      <h1>Ajaia Docs</h1>
+      <p class="muted">Demo sign-in. Pick a seeded account to test sharing between users.</p>
+      <div id="login-users"></div>
+    </div>
+  </main>
+
+  <!-- App -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <button id="sidebar-toggle" class="btn sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
+      <strong>Ajaia Docs</strong>
+      <span class="spacer"></span>
+      <span id="me" class="muted"></span>
+      <button id="logout" class="btn">Switch user</button>
+    </header>
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <button id="new-doc" class="btn primary">+ New document</button>
+        <label class="btn upload">
+          Upload file
+          <input id="upload" type="file" accept=".txt,.md,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        </label>
+        <p class="hint">Supported: .txt, .md, .docx (max 2 MB). Drag &amp; drop also works.</p>
+        <div class="search-wrap">
+          <input id="doc-search" type="search" placeholder="Search documents…" aria-label="Search documents" class="search-input">
+          <ul id="search-results" class="doclist search-results hidden"></ul>
+        </div>
+        <h3>My documents</h3>
+        <ul id="owned" class="doclist"></ul>
+        <h3>Shared with me</h3>
+        <ul id="shared" class="doclist"></ul>
+      </aside>
+
+      <section class="main" id="main-area">
+        <div id="drop-zone" class="drop-zone hidden">
+          <div class="drop-zone-inner">Drop file here to import</div>
+        </div>
+        <div id="empty" class="empty">Select a document or create a new one.</div>
+        <div id="editor-wrap" class="hidden">
+          <div class="doc-head">
+            <input id="title" maxlength="200" aria-label="Document title">
+            <span id="role-badge" class="badge"></span>
+            <span id="save-state" class="muted"></span>
+            <button id="share-btn" class="btn">Share</button>
+            <button id="export-btn" class="btn" aria-label="Export document">Export</button>
+            <button id="delete-btn" class="btn danger">Delete</button>
+          </div>
+          <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting toolbar">
+            <select id="block" aria-label="Text style">
+              <option value="p">Paragraph</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+            </select>
+            <button data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+            <button data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+            <button data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+            <span class="toolbar-sep" aria-hidden="true"></span>
+            <button data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">&bull; List</button>
+            <button data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">1. List</button>
+            <span class="toolbar-sep" aria-hidden="true"></span>
+            <button id="link-btn" title="Insert link (Ctrl+K)" aria-label="Insert link">&#128279;</button>
+            <span class="toolbar-sep" aria-hidden="true"></span>
+            <button data-cmd="undo" title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+            <button data-cmd="redo" title="Redo (Ctrl+Y)" aria-label="Redo">&#8631;</button>
+          </div>
+          <div id="editor" class="editor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Document content"></div>
+          <div class="editor-footer">
+            <span id="word-count" class="muted"></span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Share dialog -->
+  <dialog id="share-dialog">
+    <form method="dialog" class="dialog-body" id="share-form">
+      <h2>Share document</h2>
+      <div class="row">
+        <input id="share-email" type="email" placeholder="email, e.g. bob@example.com" required>
+        <select id="share-role" aria-label="Permission">
+          <option value="editor">Can edit</option>
+          <option value="viewer">Can view</option>
+        </select>
+        <button class="btn primary" id="share-add" type="button">Share</button>
+      </div>
+      <p class="hint">Seeded users: alice@, bob@, carol@example.com</p>
+      <ul id="share-list" class="sharelist"></ul>
+      <div class="row end"><button class="btn" value="close">Done</button></div>
+    </form>
+  </dialog>
+
+  <!-- Delete confirmation dialog -->
+  <dialog id="delete-dialog">
+    <div class="dialog-body">
+      <h2>Delete document?</h2>
+      <p id="delete-msg"></p>
+      <div class="row end">
+        <button class="btn" id="delete-cancel">Cancel</button>
+        <button class="btn danger" id="delete-confirm">Delete</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Export dialog -->
+  <dialog id="export-dialog">
+    <div class="dialog-body">
+      <h2>Export document</h2>
+      <p class="muted">Choose a format to download.</p>
+      <div class="export-grid">
+        <button class="btn" data-export="txt">Plain text (.txt)</button>
+        <button class="btn" data-export="md">Markdown (.md)</button>
+        <button class="btn" data-export="html">HTML (.html)</button>
+        <button class="btn" data-export="docx">Word (.docx)</button>
+      </div>
+      <div class="row end" style="margin-top:16px;">
+        <button class="btn" id="export-cancel">Cancel</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
